@@ -1,0 +1,41 @@
+{
+  "queries": [
+    {
+      "term": "rclpy",
+      "category": "technical term",
+      "expected_entities": ["rclpy", "nodes", "callbacks"]
+    },
+    {
+      "term": "ROS 2 nodes",
+      "category": "concept",
+      "expected_entities": ["nodes", "rclpy", "publisher", "subscriber"]
+    },
+    {
+      "term": "publisher subscriber pattern",
+      "category": "concept",
+      "expected_entities": ["publisher", "subscriber", "topics", "messages"]
+    },
+    {
+      "term": "ROS 2 services",
+      "category": "concept",
+      "expected_entities": ["services", "client", "server"]
+    },
+    {
+      "term": "actionlib in ROS 2",
+      "category": "concept",
+      "expected_entities": ["actions", "action client", "action server"]
+    }
+  ],
+  "modules": [
+    {
+      "name": "Module 1: ROS 2",
+      "expected_chapters": [
+        "Introduction to ROS 2",
+        "Nodes and Communication",
+        "Services and Actions",
+        "Launch Files",
+        "Parameters"
+      ]
+    }
+  ]
+}
