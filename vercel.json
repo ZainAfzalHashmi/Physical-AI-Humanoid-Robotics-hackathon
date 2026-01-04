@@ -5,14 +5,14 @@
       "src": "hackathon-ai-book/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "rootDirectory": "hackathon-ai-book"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/build/$1"
+      "dest": "/$1"
     }
   ]
 }

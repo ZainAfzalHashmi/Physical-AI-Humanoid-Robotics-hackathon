@@ -1,6 +1,18 @@
 {
   "root": ".",
-  "buildCommand": "cd .. && cd hackathon-ai-book && npm run build",
-  "outputDirectory": "build",
-  "devCommand": "cd hackathon-ai-book && npm run dev"
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/build/$1"
+    }
+  ]
 }
