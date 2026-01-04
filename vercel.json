@@ -5,15 +5,18 @@
       "src": "hackathon-ai-book/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "rootDirectory": "hackathon-ai-book",
-        "outputDirectory": "build"
+        "distDir": "build"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/build/$1"
     }
-  ]
+  ],
+  "github": {
+    "enabled": true,
+    "autoJobCancelation": true
+  }
 }
