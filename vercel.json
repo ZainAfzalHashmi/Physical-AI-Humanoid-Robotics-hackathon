@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "hackathon-ai-book/package.json",
+      "src": "hackathon-ai-book/**/*",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build"
@@ -12,11 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/build/$1"
+      "dest": "/hackathon-ai-book/build/$1"
     }
-  ],
-  "github": {
-    "enabled": true,
-    "autoJobCancelation": true
-  }
+  ]
 }
