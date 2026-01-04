@@ -1,8 +1,15 @@
 {
-  "rootDirectory": "hackathon-ai-book",
+  "version": 2,
   "builds": [
     {
-      "src": "package.json",
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
+      "src": "hackathon-ai-book/package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build"
@@ -11,8 +18,12 @@
   ],
   "routes": [
     {
+      "src": "/hackathon-ai-book/(.*)",
+      "dest": "hackathon-ai-book/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/build/$1"
+      "dest": "frontend/$1"
     }
   ]
 }
