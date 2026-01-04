@@ -5,7 +5,8 @@
       "src": "hackathon-ai-book/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "rootDirectory": "hackathon-ai-book"
+        "rootDirectory": "hackathon-ai-book",
+        "outputDirectory": "build"
       }
     }
   ],
