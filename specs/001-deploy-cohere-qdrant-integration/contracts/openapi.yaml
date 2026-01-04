@@ -1,0 +1,276 @@
+openapi: 3.0.0
+info:
+  title: RAG Chatbot API for ROS 2 Book
+  description: API for the RAG chatbot system integrated with the ROS 2 book project
+  version: 1.0.0
+servers:
+  - url: https://api.ros2-book.example.com
+    description: Production server
+  - url: https://staging-api.ros2-book.example.com
+    description: Staging server
+
+paths:
+  /v1/chat/start:
+    post:
+      summary: Start a new chat session
+      description: Creates a new chat session and returns the session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: Optional user identifier
+                initial_query:
+                  type: string
+                  description: Optional initial query for the chat
+              example:
+                user_id: "user-12345"
+                initial_query: "What is ROS 2?"
+      responses:
+        '201':
+          description: Chat session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    description: Unique identifier for the new session
+                  title:
+                    type: string
+                    description: Generated title for the conversation
+                example:
+                  session_id: "session-abc123"
+                  title: "Introduction to ROS 2"
+        '400':
+          description: Invalid request parameters
+
+  /v1/chat/{session_id}/message:
+    post:
+      summary: Send a message in a chat session
+      description: Sends a user message and returns the AI response
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the chat session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: The user's message content
+                context_chunks:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional pre-retrieved context chunks
+              example:
+                content: "Explain how to create a publisher in ROS 2"
+                context_chunks: ["chunk-123", "chunk-456"]
+      responses:
+        '200':
+          description: AI response to the user's message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI-generated response
+                  relevant_chunks:
+                    type: array
+                    items:
+                      type: string
+                    description: IDs of chunks that were used to generate the response
+                  confidence:
+                    type: number
+                    format: float
+                    description: Confidence score of the response (0-1)
+                example:
+                  response: "In ROS 2, you can create a publisher by initializing a node and calling create_publisher..."
+                  relevant_chunks: ["chunk-123", "chunk-456", "chunk-789"]
+                  confidence: 0.87
+        '404':
+          description: Session not found
+        '429':
+          description: Rate limit exceeded
+
+  /v1/chat/{session_id}:
+    get:
+      summary: Get chat session details
+      description: Retrieve details of a specific chat session
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the chat session
+      responses:
+        '200':
+          description: Chat session details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+        '404':
+          description: Session not found
+
+  /v1/embeddings/process-book:
+    post:
+      summary: Process book content for embeddings
+      description: Processes book Markdown files and stores embeddings in Qdrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - book_path
+              properties:
+                book_path:
+                  type: string
+                  description: Path to the book content directory
+                reprocess_all:
+                  type: boolean
+                  description: Whether to reprocess all content or only new/changed files
+              example:
+                book_path: "/path/to/book/docs"
+                reprocess_all: false
+      responses:
+        '202':
+          description: Book processing started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    description: ID to track the processing job
+                  status:
+                    type: string
+                    description: Current status of the processing job
+                example:
+                  job_id: "job-xyz789"
+                  status: "processing"
+        '400':
+          description: Invalid request parameters
+
+  /v1/embeddings/status/{job_id}:
+    get:
+      summary: Get embedding processing job status
+      description: Check the status of a book embedding processing job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the processing job
+      responses:
+        '200':
+          description: Job status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  progress:
+                    type: number
+                    format: float
+                    description: Progress percentage (0-100)
+                  details:
+                    type: object
+                    description: Additional status details
+                example:
+                  job_id: "job-xyz789"
+                  status: "processing"
+                  progress: 75.0
+                  details: {"processed_chunks": 150, "total_chunks": 200}
+
+  /v1/health:
+    get:
+      summary: Health check endpoint
+      description: Check the health status of the API
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                example:
+                  status: "healthy"
+                  timestamp: "2025-12-20T10:00:00Z"
+
+components:
+  schemas:
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        relevant_chunks:
+          type: array
+          items:
+            type: string
+      example:
+        id: "msg-abc123"
+        session_id: "session-abc123"
+        role: "user"
+        content: "How do I create a publisher in ROS 2?"
+        timestamp: "2025-12-20T10:00:00Z"
+        relevant_chunks: ["chunk-123", "chunk-456"]

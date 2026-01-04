@@ -1,127 +1,242 @@
----
-sidebar_label: 'Lesson 1: Introduction to ROS 2 Architecture and Nodes'
-sidebar_position: 1
----
-
 # Lesson 1: Introduction to ROS 2 Architecture and Nodes
 
-## Overview
-In this lesson, you'll learn about the ROS 2 architecture and how to create basic nodes. We'll explore the node-based design concept and implement your first ROS 2 nodes in Python.
-
 ## Learning Objectives
-- Understand the ROS 2 architecture and node-based design
-- Create basic ROS 2 nodes in Python
-- Understand the node lifecycle and initialization
-- Implement proper error handling in nodes
+By the end of this lesson, you will be able to:
+- Explain the ROS 2 architecture and its key components
+- Create and run a basic ROS 2 node in Python
+- Understand the lifecycle of a ROS 2 node
+- Use common ROS 2 tools for node management
 
-## What is ROS 2 and Why It Matters for Humanoid Robotics
+## What is ROS 2?
 
-ROS 2 (Robot Operating System 2) is a flexible framework for writing robot software. It's a collection of tools, libraries, and conventions that aim to simplify the task of creating complex and robust robot behavior across a wide variety of robot platforms.
+ROS 2 (Robot Operating System 2) is not an operating system but rather a flexible framework for writing robot software. It's a collection of tools, libraries, and conventions that aim to simplify the task of creating complex and robust robot behavior across a wide variety of robot platforms.
 
-For humanoid robotics specifically, ROS 2 provides:
-- Distributed computing capabilities for complex multi-joint systems
-- Real-time communication between different subsystems (vision, control, planning)
-- Extensive library support for robotics algorithms
-- Simulation capabilities for testing before deployment
+### Key Concepts in ROS 2 Architecture
 
-## The Node-Based Architecture Concept
+#### Nodes
+A node is an executable that uses ROS 2 to communicate with other nodes. Nodes are the fundamental building blocks of a ROS 2 system. They contain the code that performs specific tasks and can receive, send, or process data.
 
-In ROS 2, computation is broken down into nodes. A node is an executable that uses ROS 2 to communicate with other nodes. Nodes can:
-- Publish data to topics
-- Subscribe to topics
-- Provide services
-- Call services
+Nodes are organized into packages, which are the basic building and distribution units in ROS 2. A package contains all the necessary files for a specific functionality, including source code, configuration files, and documentation.
 
-This modular approach allows for:
-- Code reuse across different robot platforms
-- Independent development of different robot capabilities
-- Easy debugging and testing of individual components
+#### Packages
+A package is the smallest unit of functionality in ROS 2. It contains libraries, executables, scripts, or other files required for a specific functionality. A package typically contains:
 
-## Setting Up Your Development Environment
-
-Before creating nodes, ensure you have:
-- ROS 2 installed (Humble Hawksbill or later recommended)
-- Python 3.8 or higher
-- Basic understanding of Python programming
+- Source code files
+- Launch files
+- Configuration files
+- Documentation
+- Tests
 
 ## Creating Your First ROS 2 Node
 
-Let's create a basic ROS 2 node in Python:
+### Prerequisites
+Before creating your first node, ensure you have ROS 2 installed (Humble Hawksbill or later recommended). You should also have a workspace set up.
+
+### Step 1: Create a Package
+```bash
+# In your ROS 2 workspace src directory
+ros2 pkg create --build-type ament_python py_nodes_tutorial
+```
+
+### Step 2: Create the Node Script
+Create a Python file in `py_nodes_tutorial/py_nodes_tutorial/simple_node.py`:
 
 ```python
-#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 
-class BasicNode(Node):
+
+class SimpleNode(Node):
     def __init__(self):
-        super().__init__('basic_node')
-        self.get_logger().info('Hello from basic_node!')
+        super().__init__('simple_node')
+        self.get_logger().info('SimpleNode has been started')
+
 
 def main(args=None):
     rclpy.init(args=args)
-    node = BasicNode()
-    node.get_logger().info('Node has been created')
+    node = SimpleNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
-    # Keep the node alive
-    rclpy.spin(node)
-
-    # Cleanup
-    node.destroy_node()
-    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
 ```
 
-## Understanding the Node Lifecycle
-
-A ROS 2 node typically follows this lifecycle:
-1. **Initialization**: The node is created and initialized
-2. **Activation**: The node becomes active and can communicate
-3. **Running**: The node performs its tasks
-4. **Shutdown**: The node is properly shut down
-
-## Node Initialization and Spinning
-
-The `rclpy.init()` function initializes the ROS 2 client library. The `rclpy.spin()` function keeps the node alive and processes callbacks. When you're done with the node, call `destroy_node()` and `rclpy.shutdown()` to properly clean up resources.
-
-## Error Handling in Nodes
-
-Always implement proper error handling in your nodes:
+### Step 3: Setup File Configuration
+Update the `setup.py` file in your package directory to include the console script:
 
 ```python
+from setuptools import setup
+import os
+from glob import glob
+
+package_name = 'py_nodes_tutorial'
+
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=[package_name],
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name,
+            ['package.xml']),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='Your Name',
+    maintainer_email='your.email@example.com',
+    description='Simple Python nodes for tutorial',
+    license='TODO: License declaration',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'simple_node = py_nodes_tutorial.simple_node:main',
+        ],
+    },
+)
+```
+
+### Step 4: Building and Running the Node
+```bash
+# Build the package
+colcon build --packages-select py_nodes_tutorial
+
+# Source the workspace
+source install/setup.bash
+
+# Run the node
+ros2 run py_nodes_tutorial simple_node
+```
+
+## Node Lifecycle
+
+ROS 2 nodes have a well-defined lifecycle, which is an optional state machine that standardizes the states a node can be in during execution. The lifecycle provides improved fault handling and coordinated startup/shutdown across a system.
+
+The states in the ROS 2 lifecycle are:
+- Unconfigured: Initial state after creation
+- Inactive: After successful configuration
+- Active: After successful transition from inactive
+- Finalized: After successful transition from any other state
+
+## Essential ROS 2 CLI Commands for Node Management
+
+### Listing Nodes
+```bash
+ros2 node list
+```
+This command shows all active nodes in the ROS 2 graph.
+
+### Information About a Specific Node
+```bash
+ros2 node info <node_name>
+```
+This provides detailed information about a specific node, including its topics and services.
+
+### Creating a Node from Command Line
+Sometimes it's useful to create a temporary node for testing purposes:
+```bash
+ros2 run demo_nodes_cpp talker
+```
+
+## Node Communication Overview
+
+In ROS 2, nodes communicate through several mechanisms:
+- **Topics**: Asynchronous, many-to-many communication using publish/subscribe pattern
+- **Services**: Synchronous, request/response communication 
+- **Actions**: Asynchronous, goal-oriented communication with feedback
+
+We'll explore these communication patterns in the upcoming lessons.
+
+## Best Practices for Node Design
+
+1. **Single Responsibility**: Each node should have a single, well-defined purpose
+2. **Modularity**: Design nodes to be reusable and replaceable
+3. **Error Handling**: Implement proper error handling and recovery mechanisms
+4. **Logging**: Use appropriate log levels (debug, info, warn, error, fatal)
+5. **Parameter Configuration**: Use ROS 2 parameters for configuration values
+6. **Resource Management**: Properly clean up resources when shutting down
+
+## Parameters in ROS 2 Nodes
+
+Parameters allow nodes to be configured without recompilation. Here's how to implement parameters in your node:
+
+```python
+import rclpy
+from rclpy.node import Node
+
+
+class NodeWithParameters(Node):
+    def __init__(self):
+        super().__init__('node_with_parameters')
+        
+        # Declare parameters with default values
+        self.declare_parameter('my_parameter', 'default_value')
+        self.declare_parameter('threshold', 1.0)
+        
+        # Get parameter values
+        my_param = self.get_parameter('my_parameter').value
+        threshold = self.get_parameter('threshold').value
+        
+        self.get_logger().info(f'My parameter: {my_param}')
+        self.get_logger().info(f'Threshold: {threshold}')
+
+
 def main(args=None):
+    rclpy.init(args=args)
+    node = NodeWithParameters()
+    
     try:
-        rclpy.init(args=args)
-        node = BasicNode()
-
-        # Perform operations
         rclpy.spin(node)
-
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        print(f'Error occurred: {e}')
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
 ```
 
-## Hands-On Exercise
+## Quality of Service (QoS) in Nodes
 
-Create a node that prints "Hello from [your_node_name]!" and runs for 10 seconds before shutting down.
+QoS settings allow you to control the behavior of publishers and subscribers in terms of reliability, durability, and other aspects:
 
-## Summary
+```python
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
-In this lesson, you learned about the ROS 2 architecture and how to create basic nodes. You now understand the node lifecycle and how to properly initialize and shut down nodes.
+# Create a QoS profile
+qos_profile = QoSProfile(
+    depth=10,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.VOLATILE
+)
+```
 
-## Review Questions
+## Lesson Summary
 
-1. What is a ROS 2 node?
-2. What is the purpose of `rclpy.spin()`?
-3. Why is proper error handling important in ROS 2 nodes?
+In this lesson, you've learned about the ROS 2 architecture and how to create basic nodes. You now understand:
+- The fundamental concepts of nodes and packages
+- How to create, build, and run a ROS 2 node
+- The lifecycle of a ROS 2 node
+- Essential CLI commands for node management
+- Best practices for node design
+- How to work with parameters and QoS settings
 
-## Next Lesson
+## Exercises
 
-Continue to Lesson 2: Publisher-Subscriber Pattern (Topics) to learn about asynchronous communication in ROS 2.
+1. Create a node called "robot_controller" with appropriate parameters like max_speed and operating_mode.
+2. Explore the ROS 2 documentation to understand different QoS policies and when to use each one.
+3. Write a simple node that prints its lifecycle changes.
+
+## Next Steps
+
+In the next lesson, we'll explore the publisher-subscriber communication pattern that enables asynchronous data exchange between nodes.
